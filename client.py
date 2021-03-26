@@ -62,7 +62,8 @@ def listener():
             #print(e)
             #print("Error. Bye.")
             #client_socket.close()
-            break
+            #break
+            pass
 
 peer_list = []
 peer_key = []
