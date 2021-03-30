@@ -1,19 +1,32 @@
+# server.py v0.1
+# Description:  A simple e2ee command line chat application. This is the server which will perform message exchanges.
+# Changelog:    v0.1: Base Chat Server
+
 import socket, threading
 
+# Server Details
 server_ip = '127.0.0.1'
 port = 6969
 
+# Socket Operations
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server_socket.bind((server_ip, port))
 server_socket.listen()
 
+# Client Storage
 client_list = []
 client_name = []
 
+# broadcast()
+# Description:  Sends out the message to connected clients
+# Args: message > Received message
 def broadcast(message):
     for client in client_list:
         client.send(message)
 
+# event_handler()
+# Description:  Performs client connection checks and prints out its status.
+# Args: client  > Server's Listener
 def event_handler(client):                                         
     while True:
         try:
@@ -29,6 +42,8 @@ def event_handler(client):
             client_name.remove(name)
             break
 
+# server_main()
+# Description:  Handles system message printing/broadcasting for connectivity checks.
 def server_main():
     while True:
         client, address = server_socket.accept()
@@ -43,4 +58,5 @@ def server_main():
         thread = threading.Thread(target=event_handler, args=(client,))
         thread.start()
 
+# Run
 server_main()
