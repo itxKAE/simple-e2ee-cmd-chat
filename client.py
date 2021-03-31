@@ -19,8 +19,14 @@ pubKey = keys.publickey()
 pubStr = pubKey.exportKey("PEM")
 pubStr = pubStr.decode('utf-8')
 
+
+# User input for server's address and port 
+host_no = input("Enter server IP address: ")
+port_no = int(input("Enter desired port number: "))
+
 # Username
 # if-else will check if whitespace are present in input, if present, replace whitespace with null
+ADDR = (host_no, port_no)
 name = input("Enter your name: ")
 if " " in name:
     name = name.replace(" ", "")
@@ -30,8 +36,9 @@ if " " in name:
 #               2. Constantly checks for input, if available, encrypt the message using encrypt(message) before sending out
 def sender():
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    client_socket.connect(('127.0.0.1', 6969))
-
+    #client_socket.connect(('127.0.0.1', 6969))
+    client_socket.connect(ADDR)
+    
     message = client_socket.recv(1024).decode('ascii')
     if message == 'NAME':
         client_socket.send(name.encode('ascii'))
@@ -51,8 +58,9 @@ def sender():
 #               3. elif "BEING PUBLIC KEY": Checks if a key-exchange request is received, if yes, perform key-checks before storing the key in peer_key[]
 def listener():
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    client_socket.connect(('127.0.0.1', 6969))
-
+    #client_socket.connect(('127.0.0.1', 6969))
+    client_socket.connect(ADDR)
+    
     while True:
         try:
             message = client_socket.recv(1024).decode('ascii')

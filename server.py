@@ -5,8 +5,9 @@
 import socket, threading
 
 # Server Details
-server_ip = '127.0.0.1'
-port = 6969
+# Get the server's current IP address and ask user for the desired port to establish connection
+server_ip = socket.gethostbyname(socket.gethostname())
+port = int(input("Enter port number of the server: "))
 
 # Socket Operations
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -46,6 +47,9 @@ def event_handler(client):
 # Description:  Handles system message printing/broadcasting for connectivity checks.
 def server_main():
     while True:
+        print("Server session initiated. ")
+        print("Server IP address is " + server_ip + " with the port number of " + str(port) + ".")
+        print("Checking for client connections.......")
         client, address = server_socket.accept()
         print("{} connected.".format(str(address)))       
         client.send('NAME'.encode('ascii'))
