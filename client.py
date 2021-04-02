@@ -5,16 +5,19 @@
 #               v0.2: Added RSA Key Generation & Exchange
 #               v0.3: Added Encryption & Decryption
 #               v0.4: Added Padding
+#               v0.5: Added RSA Sign/Verify
 
 from Crypto.PublicKey import RSA
 from Crypto.Cipher import PKCS1_OAEP
+
+from hashlib import sha512
 
 import binascii
 import socket, threading
 import time
 
 # Public/Private Key Generation
-keys = RSA.generate(3072)
+keys = RSA.generate(4096)
 pubKey = keys.publickey()
 pubStr = pubKey.exportKey("PEM")
 pubStr = pubStr.decode('utf-8')
@@ -36,17 +39,17 @@ if " " in name:
 #               2. Constantly checks for input, if available, encrypt the message using encrypt(message) before sending out
 def sender():
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    #client_socket.connect(('127.0.0.1', 6969))
     client_socket.connect(ADDR)
     
-    message = client_socket.recv(1024).decode('ascii')
+    message = client_socket.recv(4096).decode('ascii')
     if message == 'NAME':
         client_socket.send(name.encode('ascii'))
 
     while True:
         message = '{}: {}'.format(name, input(''))
+        signature = sign(message)
         message = encrypt(message)
-        message = binascii.hexlify(message).decode('utf-8')
+        message = binascii.hexlify(message).decode('utf-8') + " " + signature
         client_socket.send(message.encode('ascii'))
 
 # listener()
@@ -58,12 +61,11 @@ def sender():
 #               3. elif "BEING PUBLIC KEY": Checks if a key-exchange request is received, if yes, perform key-checks before storing the key in peer_key[]
 def listener():
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    #client_socket.connect(('127.0.0.1', 6969))
     client_socket.connect(ADDR)
     
     while True:
         try:
-            message = client_socket.recv(1024).decode('ascii')
+            message = client_socket.recv(4096).decode('ascii')
             if message == 'NAME':
                 nameR = name + "'s Listener"
                 client_socket.send(nameR.encode('ascii'))
@@ -86,11 +88,19 @@ def listener():
                         print("System: Complete!")
                 else:
                     if not "Connection Success." in message:
+                        signature = message.split()[1]
+                        message = message.split()[0]
                         message = message.encode('utf-8')
                         message = binascii.unhexlify(message)
-                        print(decrypt(message))
+                        message = decrypt(message)
+                        if "NO" in verify_signature(message, signature):
+                            print("System: Message does not originate from original sender!")
+                        print(message)
+                    elif "left" in message:
+                        print("System: " + message)
                     else:
                         print("System: " + message)
+                        print("System: Please wait...")
         except Exception as e:
             # The following are for error handling
             #print(e)
@@ -128,8 +138,8 @@ def key_exchange(message):
 # Args: message > Received message that contains the target's name, public key and whether a key exchange is required
 def key_check(message):
     sender = message.split()[0]
-    key = message.split()[1] + " " + message.split()[2] + " " + message.split()[3] + "\n" + message.split()[4] + "\n" + message.split()[5] + "\n" + message.split()[6] + "\n" + message.split()[7] + "\n" + message.split()[8] + "\n" + message.split()[9] + "\n" + message.split()[10] + "\n" + message.split()[11] + "\n" + message.split()[12] + "\n" + message.split()[13] + " " + message.split()[14] + " " + message.split()[15]
-    status = message.split()[16]
+    key = message.split()[1] + " " + message.split()[2] + " " + message.split()[3] + "\n" + message.split()[4] + "\n" + message.split()[5] + "\n" + message.split()[6] + "\n" + message.split()[7] + "\n" + message.split()[8] + "\n" + message.split()[9] + "\n" + message.split()[10] + "\n" + message.split()[11] + "\n" + message.split()[12] + "\n" + message.split()[13] + "\n" + message.split()[14] + "\n" + message.split()[15] + "\n" + message.split()[16] + " "  + message.split()[17] + " "  + message.split()[18]
+    status = message.split()[19]
     
     peer_list.append(sender)
     peer_key.append(key)
@@ -175,6 +185,26 @@ def unpad(message):
             return "System: Message is tempered!\nSystem: Received message: " + message
     else:
         return "System: Message is tempered!\nSystem: Received message: " + message
+
+# sign()
+# Description:  Signs the input using client's private key which will be used for identity tracing when the target receives
+# Args: message > Input string
+def sign(message):
+    hash = int.from_bytes(sha512(message.encode('utf-8')).digest(), byteorder='big')
+    return hex(pow(hash, keys.d, keys.n))
+
+# verify_signature()
+# Description:      Verify the authencity of the received message, if it belongs to the target, returns "YES" to tell the system that this is a verified message
+# Args: message     > Decrypted message
+#       signature   > Received signature from target
+def verify_signature(message, signature):
+    peerKey = RSA.importKey(peer_key[0])
+    hash = int.from_bytes(sha512(message.encode('utf-8')).digest(), byteorder='big')
+    hashFromSignature = pow(int(signature, 0), peerKey.e, peerKey.n)
+    if hash == hashFromSignature:
+        return "YES"
+    else:
+        return "NO"
 
 # Threading to allow separation of client's sender and receiver
 send_thread = threading.Thread(target=sender)

@@ -31,7 +31,7 @@ def broadcast(message):
 def event_handler(client):                                         
     while True:
         try:
-            message = client.recv(1024)
+            message = client.recv(4096)
             broadcast(message)
         except:
             index = client_list.index(client)
@@ -53,7 +53,7 @@ def server_main():
         client, address = server_socket.accept()
         print("{} connected.".format(str(address)))       
         client.send('NAME'.encode('ascii'))
-        name = client.recv(1024).decode('ascii')
+        name = client.recv(4096).decode('ascii')
         client_name.append(name)
         client_list.append(client)
         print("Client Name: {}".format(name))
