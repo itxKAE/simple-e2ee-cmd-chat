@@ -11,10 +11,10 @@ The purpose of the project is to develop a program which allows 2 users to commu
 - Message Padding
 
 ## Program Flow
-![Program Flow](Flow.png)
+![Program Flow](images/Flow.png)
 
 ## Program Architecture
-![Architecture](Architecture.png)
+![Architecture](images/Architecture.png)
 
 ## Limitations
 
